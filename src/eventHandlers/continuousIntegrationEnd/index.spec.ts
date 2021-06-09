@@ -38,6 +38,17 @@ interface CommitsResponse {
   data: FindPullRequestCommitsResponse;
 }
 
+const branchProtectionRulesResponse = {
+  data: {
+    repository: {
+      branchProtectionRules: {
+        edges: [],
+        pageInfo: { endCursor: '', hasNextPage: false },
+      },
+    },
+  },
+};
+
 const validCommitResponse: CommitsResponse = {
   data: {
     repository: {
@@ -93,6 +104,8 @@ describe('continuous integration end event handler', (): void => {
 
     nock('https://api.github.com')
       .post('/graphql')
+      .reply(StatusCodes.OK, branchProtectionRulesResponse)
+      .post('/graphql')
       .reply(StatusCodes.OK, { data: null });
 
     await continuousIntegrationEndHandle(octokit, DEPENDABOT_GITHUB_LOGIN, 3);
@@ -106,6 +119,8 @@ describe('continuous integration end event handler', (): void => {
     expect.assertions(1);
 
     nock('https://api.github.com')
+      .post('/graphql')
+      .reply(StatusCodes.OK, branchProtectionRulesResponse)
       .post('/graphql')
       .reply(StatusCodes.OK, { data: { repository: { pullRequest: null } } });
 
@@ -128,6 +143,8 @@ describe('continuous integration end event handler', (): void => {
     /* eslint-enable immutable/no-mutation */
 
     nock('https://api.github.com')
+      .post('/graphql')
+      .reply(StatusCodes.OK, branchProtectionRulesResponse)
       .post('/graphql')
       .reply(StatusCodes.OK, { data: { repository: { pullRequest: null } } });
 
@@ -154,6 +171,10 @@ describe('continuous integration end event handler', (): void => {
         repository: {
           pullRequest: {
             author: { login: 'dependabot' },
+            base: {
+              // eslint-disable-next-line unicorn/prevent-abbreviations
+              ref: 'master',
+            },
             commits: {
               edges: [
                 {
@@ -181,6 +202,8 @@ describe('continuous integration end event handler', (): void => {
 
     nock('https://api.github.com')
       .post('/graphql')
+      .reply(StatusCodes.OK, branchProtectionRulesResponse)
+      .post('/graphql')
       .times(3)
       .reply(StatusCodes.OK, firstResponse);
 
@@ -201,6 +224,10 @@ describe('continuous integration end event handler', (): void => {
         repository: {
           pullRequest: {
             author: { login: 'dependabot' },
+            base: {
+              // eslint-disable-next-line unicorn/prevent-abbreviations
+              ref: 'master',
+            },
             commits: {
               edges: [
                 {
@@ -231,6 +258,10 @@ describe('continuous integration end event handler', (): void => {
         repository: {
           pullRequest: {
             author: { login: 'dependabot' },
+            base: {
+              // eslint-disable-next-line unicorn/prevent-abbreviations
+              ref: 'master',
+            },
             commits: {
               edges: [
                 {
@@ -258,6 +289,8 @@ describe('continuous integration end event handler', (): void => {
 
     nock('https://api.github.com')
       .post('/graphql')
+      .reply(StatusCodes.OK, branchProtectionRulesResponse)
+      .post('/graphql')
       .reply(StatusCodes.OK, firstResponse);
 
     nock('https://api.github.com')
@@ -279,6 +312,10 @@ describe('continuous integration end event handler', (): void => {
         repository: {
           pullRequest: {
             author: { login: 'dependabot' },
+            base: {
+              // eslint-disable-next-line unicorn/prevent-abbreviations
+              ref: 'master',
+            },
             commits: {
               edges: [
                 {
@@ -305,6 +342,8 @@ describe('continuous integration end event handler', (): void => {
 
     nock('https://api.github.com')
       .post('/graphql')
+      .reply(StatusCodes.OK, branchProtectionRulesResponse)
+      .post('/graphql')
       .reply(StatusCodes.OK, response);
 
     await continuousIntegrationEndHandle(octokit, 'some-other-login', 3);
@@ -322,6 +361,10 @@ describe('continuous integration end event handler', (): void => {
         repository: {
           pullRequest: {
             author: { login: 'dependabot' },
+            base: {
+              // eslint-disable-next-line unicorn/prevent-abbreviations
+              ref: 'master',
+            },
             commits: {
               edges: [
                 {
@@ -347,6 +390,8 @@ describe('continuous integration end event handler', (): void => {
     };
 
     nock('https://api.github.com')
+      .post('/graphql')
+      .reply(StatusCodes.OK, branchProtectionRulesResponse)
       .post('/graphql')
       .reply(StatusCodes.OK, response)
       .post('/graphql')

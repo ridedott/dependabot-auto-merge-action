@@ -76,3 +76,18 @@ export const findPullRequestCommits = `
     }
   }
 `;
+
+export const listBranchProtectionRules = `
+query($endCursor: String, $pageSize: Int!, $repositoryName: String!, $repositoryOwner: String!) {
+  repository(name: $repositoryName, owner: $repositoryOwner) {
+    branchProtectionRules(first: $pageSize, after: $endCursor) {
+      edges {
+        node {
+          pattern
+          requiresStrictStatusChecks
+        }
+      }
+    }
+  }
+}
+`;

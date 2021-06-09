@@ -40,9 +40,12 @@ export interface PullRequestInformation {
   reviewEdges: ReviewEdges;
 }
 
-interface PullRequest {
+export interface PullRequest {
   author: {
     login: string;
+  };
+  base: {
+    ref: string;
   };
   commits: {
     edges: Array<{
@@ -75,6 +78,11 @@ export interface PullRequestCommitNode {
       isValid: boolean;
     } | null;
   };
+}
+
+export interface RepositoryBranchProtectionRule {
+  pattern: string;
+  requiresStrictStatusChecks: boolean;
 }
 
 export interface FindPullRequestsInfoByReferenceNameResponse {

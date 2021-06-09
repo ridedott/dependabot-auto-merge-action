@@ -1,7 +1,9 @@
 import { context, getOctokit } from '@actions/github';
 import { isMatch } from 'micromatch';
 
+import { computeRequiresStrictStatusChecksForRefs as computeRequiresStrictStatusChecksForReferences } from '../../common/computeRequiresStrictStatusChecksForRefs';
 import { getMergeablePullRequestInformationByPullRequestNumber } from '../../common/getPullRequestInformation';
+import { listBranchProtectionRules } from '../../common/listBranchProtectionRules';
 import { tryMerge } from '../../common/merge';
 import { logInfo, logWarning } from '../../utilities/log';
 
@@ -18,14 +20,24 @@ export const pullRequestHandle = async (
     return;
   }
 
-  const pullRequestInformation = await getMergeablePullRequestInformationByPullRequestNumber(
-    octokit,
-    {
+  const [branchProtectionRules, pullRequestInformation] = await Promise.all([
+    await listBranchProtectionRules(
+      octokit,
+      context.repo.owner,
+      context.repo.repo,
+    ),
+    getMergeablePullRequestInformationByPullRequestNumber(octokit, {
       pullRequestNumber: pullRequest.number,
       repositoryName: context.repo.repo,
       repositoryOwner: context.repo.owner,
-    },
-  );
+    }),
+  ]);
+
+  const [
+    requiresStrictStatusChecks,
+  ] = computeRequiresStrictStatusChecksForReferences(branchProtectionRules, [
+    pullRequest.base.ref as string,
+  ]);
 
   if (pullRequestInformation === undefined) {
     logWarning('Unable to fetch pull request information.');
@@ -36,10 +48,17 @@ export const pullRequestHandle = async (
       )}.`,
     );
 
-    await tryMerge(octokit, maximumRetries, {
-      ...pullRequestInformation,
-      commitMessageHeadline: pullRequest.title,
-    });
+    await tryMerge(
+      octokit,
+      {
+        maximumRetries,
+        requiresStrictStatusChecks,
+      },
+      {
+        ...pullRequestInformation,
+        commitMessageHeadline: pullRequest.title,
+      },
+    );
   } else {
     logInfo(
       `Pull request #${pullRequestInformation.pullRequestNumber.toString()} created by ${

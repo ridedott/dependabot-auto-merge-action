@@ -142,7 +142,13 @@ const mergeWithRetry = async (
 
 export const tryMerge = async (
   octokit: ReturnType<typeof getOctokit>,
-  maximumRetries: number,
+  {
+    maximumRetries,
+    requiresStrictStatusChecks,
+  }: {
+    maximumRetries: number;
+    requiresStrictStatusChecks: boolean;
+  },
   {
     commitMessageHeadline,
     mergeableState,
@@ -166,16 +172,22 @@ export const tryMerge = async (
   } else if (merged) {
     logInfo(`Pull request is already merged.`);
   } else if (
-    /*
-     * TODO(@platform) [2021-06-01] Start pulling the value once it reaches
-     * GA.
-     */
+    requiresStrictStatusChecks === true &&
+    mergeStateStatus === 'BEHIND'
+  ) {
+    logInfo(`Pull request branch is behind base branch.`);
+  } else if (
+    requiresStrictStatusChecks === true &&
+    mergeStateStatus !== 'CLEAN'
+  ) {
+    logInfo(`Pull request cannot be merged cleanly. Current state: ${mergeStateStatus as string}.`);
+  } else if (
+    requiresStrictStatusChecks === false &&
     mergeStateStatus !== undefined &&
     mergeStateStatus !== 'CLEAN'
   ) {
     logInfo(
-      'Pull request cannot be merged cleanly. ' +
-        `Current state: ${mergeStateStatus}.`,
+      `Pull request cannot be merged cleanly. Current state: ${mergeStateStatus as string}.`,
     );
   } else if (pullRequestState !== 'OPEN') {
     logInfo(`Pull request is not open: ${pullRequestState}.`);

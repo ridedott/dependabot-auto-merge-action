@@ -39,6 +39,17 @@ interface CommitsResponse {
   data: FindPullRequestCommitsResponse;
 }
 
+const branchProtectionRulesResponse = {
+  data: {
+    repository: {
+      branchProtectionRules: {
+        edges: [],
+        pageInfo: { endCursor: '', hasNextPage: false },
+      },
+    },
+  },
+};
+
 const validCommitResponse: CommitsResponse = {
   data: {
     repository: {
@@ -109,6 +120,8 @@ describe('pull request event handler', (): void => {
 
     nock('https://api.github.com')
       .post('/graphql')
+      .reply(StatusCodes.OK, branchProtectionRulesResponse)
+      .post('/graphql')
       .reply(StatusCodes.OK, { data: null });
 
     await pullRequestHandle(octokit, DEPENDABOT_GITHUB_LOGIN, 3);
@@ -122,6 +135,8 @@ describe('pull request event handler', (): void => {
     expect.assertions(1);
 
     nock('https://api.github.com')
+      .post('/graphql')
+      .reply(StatusCodes.OK, branchProtectionRulesResponse)
       .post('/graphql')
       .reply(StatusCodes.OK, { data: { repository: { pullRequest: null } } });
 
@@ -140,6 +155,10 @@ describe('pull request event handler', (): void => {
         repository: {
           pullRequest: {
             author: { login: 'dependabot' },
+            base: {
+              // eslint-disable-next-line unicorn/prevent-abbreviations
+              ref: 'master',
+            },
             commits: {
               edges: [
                 {
@@ -166,6 +185,8 @@ describe('pull request event handler', (): void => {
 
     nock('https://api.github.com')
       .post('/graphql')
+      .reply(StatusCodes.OK, branchProtectionRulesResponse)
+      .post('/graphql')
       .reply(StatusCodes.OK, response);
 
     await pullRequestHandle(octokit, 'some-other-login', 3);
@@ -183,6 +204,10 @@ describe('pull request event handler', (): void => {
         repository: {
           pullRequest: {
             author: { login: 'dependabot' },
+            base: {
+              // eslint-disable-next-line unicorn/prevent-abbreviations
+              ref: 'master',
+            },
             commits: {
               edges: [
                 {
@@ -208,6 +233,8 @@ describe('pull request event handler', (): void => {
     };
 
     nock('https://api.github.com')
+      .post('/graphql')
+      .reply(StatusCodes.OK, branchProtectionRulesResponse)
       .post('/graphql')
       .reply(StatusCodes.OK, response)
       .post('/graphql')
